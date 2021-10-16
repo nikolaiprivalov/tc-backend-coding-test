@@ -1,0 +1,57 @@
+env:
+  RUBY_VERSION: 3.0.2
+
+name: Rails CI
+on: push
+
+jobs:
+  rubocop:
+    name: Rubocop
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Setup Ruby and install gems
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ env.RUBY_VERSION }}
+          bundler-cache: true
+
+      - name: Run linter
+        run: bundler exec rubocop
+
+  rspec:
+    name: RSpec
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:14
+        ports:
+          - 5432:5432
+        env:
+          POSTGRES_DB: tc_backend_coding_test_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Setup Ruby and install gems
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ env.RUBY_VERSION }}
+          bundler-cache: true
+
+      - name: Run specs
+        run: |
+          RAILS_ENV=test bundler exec rake db:create
+          RAILS_ENV=test bundler exec rake db:schema:load
+          RAILS_ENV=test bundler exec rspec
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost/tc_backend_coding_test_test
