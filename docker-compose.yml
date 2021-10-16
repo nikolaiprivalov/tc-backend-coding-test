@@ -1,0 +1,71 @@
+version: '3.8'
+
+services:
+  app: &app
+    build:
+      context: .dockerdev
+      dockerfile: Dockerfile
+      args:
+        RUBY_VERSION: '3.0.2'
+        PG_MAJOR: '14'
+        BUNDLER_VERSION: '2.2.29'
+    image: tc_backend_coding_test
+    environment: &env
+      RAILS_ENV: ${RAILS_ENV:-development}
+    tmpfs:
+      - /tmp
+      - /app/tmp/pids
+
+  backend: &backend
+    <<: *app
+    stdin_open: true
+    tty: true
+    volumes:
+      - .:/app:cached
+      - rails_cache:/app/tmp/cache
+      - bundle:/usr/local/bundle
+      - .dockerdev/.psqlrc:/root/.psqlrc:ro
+    environment:
+      <<: *env
+      DATABASE_URL: postgres://postgres:postgres@postgres:5432
+      BOOTSNAP_CACHE_DIR: /usr/local/bundle/_bootsnap
+      WEB_CONCURRENCY: 1
+      HISTFILE: /app/log/.bash_history
+      PSQL_HISTFILE: /app/log/.psql_history
+      EDITOR: vi
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  runner:
+    <<: *backend
+    command: /bin/bash
+    ports:
+      - '3000:3000'
+      - '3002:3002'
+
+  rails:
+    <<: *backend
+    command: bundle exec rails server -b 0.0.0.0
+    ports:
+      - '3000:3000'
+
+  postgres:
+    image: postgres:14
+    volumes:
+      - .psqlrc:/root/.psqlrc:ro
+      - postgres:/var/lib/postgresql/data
+      - ./log:/root/log:cached
+    environment:
+      PSQL_HISTFILE: /root/log/.psql_history
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - 5432
+    healthcheck:
+      test: pg_isready -U postgres -h 127.0.0.1
+      interval: 5s
+
+volumes:
+  postgres:
+  bundle:
+  rails_cache:
