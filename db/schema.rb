@@ -10,9 +10,52 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 0) do
+ActiveRecord::Schema.define(version: 2021_10_17_121022) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
+  create_table "availabilities", force: :cascade do |t|
+    t.bigint "table_id", null: false
+    t.integer "quantity_available", null: false
+    t.date "date", null: false
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.index ["table_id", "date"], name: "index_availabilities_on_table_id_and_date", unique: true
+    t.index ["table_id"], name: "index_availabilities_on_table_id"
+  end
+
+  create_table "reservations", force: :cascade do |t|
+    t.bigint "table_id", null: false
+    t.string "name"
+    t.string "email", null: false
+    t.integer "guests", null: false
+    t.date "date", null: false
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.index ["table_id"], name: "index_reservations_on_table_id"
+  end
+
+  create_table "restaurants", force: :cascade do |t|
+    t.string "name"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+  end
+
+  create_table "tables", force: :cascade do |t|
+    t.bigint "restaurant_id", null: false
+    t.string "name"
+    t.integer "quantity", null: false
+    t.integer "min_guests", null: false
+    t.integer "max_guests", null: false
+    t.time "available_from", null: false
+    t.time "available_to", null: false
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.index ["restaurant_id"], name: "index_tables_on_restaurant_id"
+  end
+
+  add_foreign_key "availabilities", "tables"
+  add_foreign_key "reservations", "tables"
+  add_foreign_key "tables", "restaurants"
 end
