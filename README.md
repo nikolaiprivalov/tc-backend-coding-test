@@ -1,24 +1,37 @@
-# README
+# TC_BACKEND_CODING_TEST
 
-This README would normally document whatever steps are necessary to get the
-application up and running.
+This is an overview!
+Please see the commit messages for more of a thought process.
 
-Things you may want to cover:
+## Quick Start
 
-* Ruby version
+```sh
+# first start
+docker-compose run --rm runner bundle
+docker-compose run --rm runner rails db:prepare
+RAILS_ENV=test docker-compose run --rm runner rails db:create db:schema:load
 
-* System dependencies
+# server
+docker-compose up rails
 
-* Configuration
+# tests
+RAILS_ENV=test docker-compose run --rm runner rspec 
+```
 
-* Database creation
+## Try these requests first to see what's what
 
-* Database initialization
+```
+# Availability
+curl "localhost:3000/api/availability/1?datetime=2021-10-20T10:00:00+00:00&guests=3"
 
-* How to run the test suite
+# Reservation (increment table_id for different errors)
+curl -d '{"table_id":"1", "date":"2021-10-20", "name":"jonh doe", "email":"jd@ex.com", "guests":"2"}' -H "Content-Type: application/json" -X POST http://localhost:3000/api/reservations/1
+```
 
-* Services (job queues, cache servers, search engines, etc.)
+## Unfinished:
 
-* Deployment instructions
-
-* ...
+* Controller specs are missing for the erroneous requests
+* Errors are default, date type casting error appear as can't be blank
+* Wanted to utilize handlers to achieve properly thin controllers
+* Specs are a bit untidy. Limited mocking + stubbing.
+I also use very little mocking when testing queries and or record creation services.
